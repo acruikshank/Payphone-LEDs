@@ -12,8 +12,10 @@ python send_to_teensy.py 0 'What ever text you like.' # scroll up to 200 chars o
 python send_to_teensy.py 1 # rainbow
 python send_to_teensy.py 2 # scrolling color bars
 python send_to_teensy.py 3 # random color bars
-python send_to_teensy.py 4 # random dots (my favorite so far)
+python send_to_teensy.py 4 # random dots
 python send_to_teensy.py 5 # fade out
+python send_to_teensy.py 6 # blur
+python send_to_teensy.py 7 # chromatic horizontal blur
 ```
 
 # Serial protocol

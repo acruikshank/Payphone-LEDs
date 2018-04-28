@@ -21,7 +21,7 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     int byte = Serial.read();
-    state = abs(byte-48) % 6;
+    state = abs(byte-48) % 8;
     resetSketch();
 
     if (state == 0) {
@@ -36,5 +36,7 @@ void loop() {
     case 3: return colorBands2(&leds);
     case 4: return dots(&leds);
     case 5: return fadeOut(&leds);
+    case 6: return blur(&leds);
+    case 7: return redblue(&leds);
   }
 }
