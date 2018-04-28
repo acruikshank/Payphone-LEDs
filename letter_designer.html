@@ -1,0 +1,139 @@
+<html>
+<head>
+  <style>
+  body {
+    background: #333;
+  }
+
+  #idx {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-family: monospace;
+    font-size: 40px;
+  }
+
+  .pixel {
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    border: 1px solid #666;
+  }
+
+  .pixel.on {
+    background-color: #aaa;
+  }
+
+  #output {
+    position: absolute;
+    top: 70px;
+    right: 0;
+    width: 50%;
+    background: transparent;
+    border: none;
+    color: #aaa;
+    height: 60%;
+  }
+  </style>
+  <body>
+    <input id="idx" value="0" type="number"/>
+    <div id="pixels"></div>
+    <textarea id="output"></textarea>
+    <script>
+const idx = document.getElementById("idx");
+const pixels = document.getElementById("pixels");
+const output = document.getElementById("output");
+
+let dataIndex = 0;
+let data;
+if (localStorage.data) {
+  data = JSON.parse(localStorage.data)
+} else {
+  data = [ {low: 0, high: 0} ];
+}
+
+for (let i=0; i<8; i++) {
+  let row = document.createElement('div')
+  row.setAttribute('class', 'row')
+
+  for (let j=0; j<5; j++) {
+    let pixel = document.createElement('div')
+    let idx = i*5 + j;
+    pixel.setAttribute('class', 'pixel')
+    pixel.id = `pixel-${idx}`;
+    pixel.addEventListener('click', pixelClickHandler(pixel, idx))
+    row.appendChild(pixel);
+  }
+  pixels.appendChild(row);
+}
+refreshCharacter()
+updateCCode()
+
+
+idx.addEventListener('keyup', (e) => {
+  let index = parseInt(idx.value)
+  if (index != dataIndex) {
+    dataIndex = index;
+    refreshCharacter();
+  }
+})
+
+function refreshCharacter() {
+  if (!data[dataIndex]) {
+    data[dataIndex] = {low: 0, high: 0};
+  }
+  let character = data[dataIndex]
+  for (let i=0; i<32; i++) {
+    if ((character.low>>i) & 0x1) {
+      document.getElementById(`pixel-${i}`).classList.add('on')
+    } else {
+      document.getElementById(`pixel-${i}`).classList.remove('on')
+    }
+  }
+  for (let i=0; i<8; i++) {
+    if ((character.high>>i) & 0x1) {
+      document.getElementById(`pixel-${i+32}`).classList.add('on')
+    } else {
+      document.getElementById(`pixel-${i+32}`).classList.remove('on')
+    }
+  }
+}
+
+function setPixel(i, value) {
+  if (i<32) {
+    data[dataIndex].low = value ? data[dataIndex].low | (1 << i) : data[dataIndex].low & ~(1 << i);
+  } else {
+    data[dataIndex].high = value ? data[dataIndex].high | (1 << (i-32)) : data[dataIndex].high & ~(1 << (i-32));
+  }
+  localStorage.data = JSON.stringify(data);
+  updateCCode();
+}
+
+function updateCCode() {
+  output.value = `uint32_t LOW_CHARS[] = {${data.map((d) => toLong(d.low)).join(',')}};\nuint8_t HIGH_CHARS[] = {${data.map((d) => toByte(d.high)).join(',')}};`;
+}
+
+function toLong(x) {
+  return (x<0 ? Math.pow(2,32) + x : x) + 'L';
+}
+
+function toByte(x) {
+  return (x<0 ? Math.pow(2,8) + x : x);
+}
+
+function pixelClickHandler(e, i) {
+  return function() {
+    if (e.classList.contains('on')) {
+      setPixel(i, false)
+      e.classList.remove('on')
+    } else {
+      setPixel(i, true)
+      e.classList.add('on')
+    }
+  }
+}
+
+    </script>
+  </body>
+</html>
