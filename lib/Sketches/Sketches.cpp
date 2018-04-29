@@ -150,8 +150,12 @@ void redblue(OctoWS2811 *leds) {
     }
   }
 
-  for (int i=0; i<totalLights; i++)
-    leds->setPixel(i, next[i]);
+  for (int i=0; i<totalLights; i++) {
+    if (random(200) == 0)
+      leds->setPixel(i, 0x303030);
+    else
+      leds->setPixel(i, next[i]);
+  }
 
   leds->show();
   delay(20);
