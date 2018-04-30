@@ -21,10 +21,10 @@ void setup() {
 void loop() {
   if (Serial.available() > 0) {
     int byte = Serial.read();
-    state = abs(byte-48) % 8;
+    state = abs(byte-48) % 9;
     resetSketch();
 
-    if (state == 0) {
+    if (state == 0 || state == 8) {
       Serial.readBytesUntil('\n', str, 200);
     }
   }
@@ -38,5 +38,6 @@ void loop() {
     case 5: return fadeOut(&leds);
     case 6: return blur(&leds);
     case 7: return redblue(&leds);
+    case 8: return glowtext(&leds, str);
   }
 }

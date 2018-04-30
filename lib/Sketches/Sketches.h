@@ -10,3 +10,4 @@ void text(OctoWS2811 *leds, const char *str);
 void fadeOut(OctoWS2811 *leds);
 void blur(OctoWS2811 *leds);
 void redblue(OctoWS2811 *leds);
+void glowtext(OctoWS2811 *leds, const char* str);

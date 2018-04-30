@@ -18,14 +18,16 @@ uint32_t color3 = 0x000000;
 
 const float blurKernel[] = { 1.0, 4.0, 1.0, 4.0, 16.0, 4.0, 1.0, 2.0, 1.0 };
 
+void chromeBlur(OctoWS2811 *leds, uint32_t next[]);
+
 void resetSketch() {
   offset = 0;
   color1At = 0;
-  color1 = randColor(.05);
+  color1 = 0x000000;
   color2At = ledsPerStrip;
-  color2 = randColor(.05);
+  color2 = randColor(.04);
   color3At = ledsPerStrip * 2;
-  color3 = randColor(.05);
+  color3 = randColor(.1);
 }
 
 void rainbow(OctoWS2811 *leds) {
@@ -120,35 +122,8 @@ void rgbAdd(rgb *color, uint32_t other, float rw, float gw, float bw) {
 }
 
 void redblue(OctoWS2811 *leds) {
-  float attenuate = .999;
   uint32_t next[totalLights];
-  rgb color;
-  for (int i=0; i<ledsPerStrip; i++) {
-    for (int j=0; j<ledRows; j++) {
-      float redWeight = 0.0;
-      float blueWeight = 0.0;
-      float greenWeight = 0.0;
-      color.r = color.g = color.b = 0.0;
-      if (i > 1) {
-        rgbAdd(&color, leds->getPixel((i-1) + j*ledsPerStrip), 6.0, 4.0, 2.0);
-        redWeight += 6.0;
-        greenWeight += 4.0;
-        blueWeight += 2.0;
-      }
-      rgbAdd(&color, leds->getPixel(i + j*ledsPerStrip), 16.0, 16.0, 16.0);
-      redWeight += 16.0;
-      greenWeight += 16.0;
-      blueWeight += 16.0;
-      if (i < ledsPerStrip - 1) {
-        rgbAdd(&color, leds->getPixel((i+1) + j*ledsPerStrip), 2.0, 4.0, 6.0);
-        redWeight += 2.0;
-        greenWeight += 4.0;
-        blueWeight += 6.0;
-      }
-
-      next[i + j*ledsPerStrip] = float2Color(color.r/redWeight*attenuate, color.g/greenWeight*attenuate, color.b/blueWeight*attenuate);
-    }
-  }
+  chromeBlur(leds, next);
 
   for (int i=0; i<totalLights; i++) {
     if (random(200) == 0)
@@ -160,7 +135,6 @@ void redblue(OctoWS2811 *leds) {
   leds->show();
   delay(20);
 }
-
 
 void colorBands(OctoWS2811 *leds) {
   for (int i=0; i<ledsPerStrip-1; i++) {
@@ -204,6 +178,47 @@ void dots(OctoWS2811 *leds) {
   delay(100);
 }
 
+void glowtext(OctoWS2811 *leds, const char* str) {
+  int characters = strlen(str);
+  int onCycles = 75;
+  int offCycles = 50;
+  int phaseOffset = offset % (onCycles + offCycles);
+
+  if (phaseOffset < onCycles) {
+    rgb background = colorToRGB(0x000000);
+    rgb foreground = colorToRGB(0x303030);
+
+    float fade = ((float) phaseOffset) / onCycles;
+    uint32_t fadeBackground = float2Color(background.r*fade, background.g*fade, background.b*fade);
+    uint32_t fadeForeground = float2Color(foreground.r*fade, foreground.g*fade, foreground.b*fade);
+
+    // fill background with gradient colors
+    for (int i=0; i<totalLights; i++) {
+      leds->setPixel(i, fadeBackground);
+    }
+
+    // write text shifted by offset.
+    int offset = (ledsPerStrip - characters*6 + 1) / 2;
+    for (int i=0; i<characters; i++) {
+      int charStart = i*6 + offset;
+      if (charStart > -5 && charStart < ledsPerStrip) {
+        draw_character(leds, ledsPerStrip, charStart, str[i], fadeForeground);
+      }
+    }
+  } else {
+    uint32_t next[totalLights];
+    chromeBlur(leds, next);
+
+    for (int i=0; i<totalLights; i++)
+      leds->setPixel(i, next[i]);
+  }
+
+  leds->show();
+
+  offset++;
+  delay(20);
+}
+
 void text(OctoWS2811 *leds, const char* str) {
   int characters = strlen(str);
 
@@ -214,7 +229,7 @@ void text(OctoWS2811 *leds, const char* str) {
       color1At = color2At;
       color2 = color3;
       color2At = color3At;
-      color3 = randColor(.05);
+      color3 = randColor(.1);
       color3At = offset+2*ledsPerStrip+random(0,200);
     }
     if (offset+i >= color2At) {
@@ -231,8 +246,9 @@ void text(OctoWS2811 *leds, const char* str) {
   }
 
   // fill background with gradient colors
-  for (int i=0; i<totalLights; i++)
+  for (int i=0; i<totalLights; i++) {
     leds->setPixel(i,gradient[i%ledsPerStrip]);
+  }
 
   // write text shifted by offset.
   for (int i=0; i<characters; i++) {
@@ -245,4 +261,35 @@ void text(OctoWS2811 *leds, const char* str) {
 
   offset++;
   delay(10);
+}
+
+void chromeBlur(OctoWS2811 *leds, uint32_t next[]) {
+  float attenuate = .999;
+  rgb color;
+  for (int i=0; i<ledsPerStrip; i++) {
+    for (int j=0; j<ledRows; j++) {
+      float redWeight = 0.0;
+      float blueWeight = 0.0;
+      float greenWeight = 0.0;
+      color.r = color.g = color.b = 0.0;
+      if (i > 1) {
+        rgbAdd(&color, leds->getPixel((i-1) + j*ledsPerStrip), 6.0, 4.0, 2.0);
+        redWeight += 6.0;
+        greenWeight += 4.0;
+        blueWeight += 2.0;
+      }
+      rgbAdd(&color, leds->getPixel(i + j*ledsPerStrip), 16.0, 16.0, 16.0);
+      redWeight += 16.0;
+      greenWeight += 16.0;
+      blueWeight += 16.0;
+      if (i < ledsPerStrip - 1) {
+        rgbAdd(&color, leds->getPixel((i+1) + j*ledsPerStrip), 2.0, 4.0, 6.0);
+        redWeight += 2.0;
+        greenWeight += 4.0;
+        blueWeight += 6.0;
+      }
+
+      next[i + j*ledsPerStrip] = float2Color(color.r/redWeight*attenuate, color.g/greenWeight*attenuate, color.b/blueWeight*attenuate);
+    }
+  }
 }
