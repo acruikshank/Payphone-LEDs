@@ -2,8 +2,8 @@
 #include <ColorTransform.h>
 #include <Text.h>
 
-const int ledsPerStrip = 36;
-const int ledRows = 8;
+const int ledsPerStrip = 256;
+const int ledRows = 1;
 const int totalLights = ledsPerStrip * ledRows;
 
 uint32_t gradient[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
