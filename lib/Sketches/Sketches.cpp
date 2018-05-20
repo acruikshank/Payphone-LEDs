@@ -2,8 +2,8 @@
 #include <ColorTransform.h>
 #include <Text.h>
 
-const int ledsPerStrip = 256;
-const int ledRows = 1;
+const int ledsPerStrip = 32;
+const int ledRows = 8;
 const int totalLights = ledsPerStrip * ledRows;
 
 uint32_t gradient[] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -99,7 +99,7 @@ void effect(OctoWS2811 *leds, const float kernel[]) {
           weight += rgbAdd(&color, leds->getPixel((i+1) + (j+1)*ledsPerStrip), kernel[8]);
       }
 
-      next[i + j*ledsPerStrip] = float2Color(color.r/weight, color.g/weight, color.b/weight);
+      next[j + i*ledsPerStrip] = float2Color(color.r/weight, color.g/weight, color.b/weight);
     }
   }
 
@@ -144,7 +144,7 @@ void colorBands(OctoWS2811 *leds) {
     gradient[ledsPerStrip-1] = randColor(.1);
   }
   for (int i=0; i<totalLights; i++)
-    leds->setPixel(i,gradient[i%ledsPerStrip]);
+    leds->setPixel(i,gradient[i/ledsPerStrip]);
   leds->show();
   delay(50);
 }
@@ -160,7 +160,7 @@ void colorBands2(OctoWS2811 *leds) {
     }
   }
   for (int i=0; i<totalLights; i++)
-    leds->setPixel(i,gradient[i%ledsPerStrip]);
+    leds->setPixel(i,gradient[i/ledsPerStrip]);
   leds->show();
 
   delay(200);

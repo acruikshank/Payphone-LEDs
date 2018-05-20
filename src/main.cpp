@@ -27,7 +27,7 @@ bool ringing = false;
 bool flashState = false;
 unsigned int flashLastUpdate = 0;
 
-const int config = WS2811_RGB | WS2811_800kHz;
+const int config = WS2811_GRB | WS2811_800kHz;
 OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
 Adafruit_WS2801 strip = Adafruit_WS2801(20, DATA_PIN, CLK_PIN);
 void setup() {
