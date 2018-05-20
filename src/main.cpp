@@ -5,7 +5,7 @@
 #include <main.h>
 
 #define LED_WIDTH      8   // number of LEDs horizontally
-#define LED_HEIGHT     32   // number of LEDs vertically (must be multiple of 8)
+#define LED_HEIGHT     256   // number of LEDs vertically (must be multiple of 8)
 #define LED_LAYOUT     1    // 0 = even rows left->right, 1 = even rows right->left
 
 
@@ -34,26 +34,26 @@ void setup() {
   leds.begin();
   randomSeed(analogRead(0));
   Serial.begin(9600);
-  // strip.begin();
+  strip.begin();
 
   // Update LED contents, to start they are all 'off'
-  // strip.show();
-  
+  strip.show();
+
 }
 
 void loop() {
-  // if (millis() > ambiLedLastUpdate + AMBI_DELAY && !ringing) {
-  //   updateAmbiLeds();
-  //   ambiLedLastUpdate = millis();
-  // }
-  // if (millis() > flashLastUpdate + FLASH_DELAY && ringing) {
-  //   if (flashState) {
-  //     colorWipe(Color(255, 255, 255), 0);
-  //   } else {
-  //     colorWipe(Color(255, 255, 255), 0);
-  //   }
-  //   flashState = !flashState;
-  // }
+  if (millis() > ambiLedLastUpdate + AMBI_DELAY && !ringing) {
+    updateAmbiLeds();
+    ambiLedLastUpdate = millis();
+  }
+  if (millis() > flashLastUpdate + FLASH_DELAY && ringing) {
+    if (flashState) {
+      colorWipe(Color(255, 255, 255), 0);
+    } else {
+      colorWipe(Color(255, 255, 255), 0);
+    }
+    flashState = !flashState;
+  }
 
   if (Serial.available() > 0) {
     int byte = Serial.read();
@@ -114,14 +114,14 @@ unsigned int Wheel(unsigned char WheelPos)
    WheelPos -= 85;
    return Color(255 - WheelPos * 3, 0, WheelPos * 3);
   } else {
-   WheelPos -= 170; 
+   WheelPos -= 170;
    return Color(0, WheelPos * 3, 255 - WheelPos * 3);
   }
 }
 
 void colorWipe(unsigned int c, unsigned char wait) {
   int i;
-  
+
   for (i=0; i < strip.numPixels(); i++) {
       strip.setPixelColor(i, c);
   }

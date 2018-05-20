@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <ColorTransform.h>
 #include <Text.h>
+#include "../leds.h"
 
 const int ledsPerStrip = 32;
 const int ledRows = 8;
@@ -50,6 +51,18 @@ void rainbow(OctoWS2811 *leds) {
   delay(40);
 }
 
+// int pixelIndex(int x, int y) {
+//   return x*ledRows + (x&1 ? ledRows - y - 1 : y);
+// }
+//
+// void write(OctoWS2811 *leds, int x, int y, uint32_t color) {
+//   leds->setPixel(pixelIndex(x,y), color);
+// }
+//
+// uint32_t read(OctoWS2811 *leds, int x, int y) {
+//   leds->getPixel(pixelIndex(x, y));
+// }
+//
 void fadeOut(OctoWS2811 *leds) {
   rgb c;
   float fadeRate = .9;
@@ -83,23 +96,23 @@ void effect(OctoWS2811 *leds, const float kernel[]) {
       color.r = color.g = color.b = 0.0;
       if (i > 1) {
         if (j > 1)
-          weight += rgbAdd(&color, leds->getPixel((i-1) + (j-1)*ledsPerStrip), kernel[0]);
-        weight += rgbAdd(&color, leds->getPixel((i-1) + j*ledsPerStrip), kernel[1]);
+          weight += rgbAdd(&color, ledRead(i-1, j-1), kernel[0]);
+        weight += rgbAdd(&color, ledRead(i-1, j), kernel[1]);
         if (j < ledRows-1)
-          weight += rgbAdd(&color, leds->getPixel((i-1) + (j+1)*ledsPerStrip), kernel[2]);
+          weight += rgbAdd(&color, ledRead(i-1, j+1), kernel[2]);
       }
-      if (j > 1) weight += rgbAdd(&color, leds->getPixel(i + (j-1)*ledsPerStrip), kernel[3]);
-      weight += rgbAdd(&color, leds->getPixel(i + j*ledsPerStrip), kernel[4]);
-      if (j < ledRows-1) weight += rgbAdd(&color, leds->getPixel(i + (j+1)*ledsPerStrip), kernel[5]);
+      if (j > 1) weight += rgbAdd(&color, ledRead(i, j-1), kernel[3]);
+      weight += rgbAdd(&color, ledRead(i, j), kernel[4]);
+      if (j < ledRows-1) weight += rgbAdd(&color, ledRead(i, j+1), kernel[5]);
       if (i < ledsPerStrip - 1) {
         if (j > 1)
-          weight += rgbAdd(&color, leds->getPixel((i+1) + (j-1)*ledsPerStrip), kernel[6]);
-        weight += rgbAdd(&color, leds->getPixel((i+1) + j*ledsPerStrip), kernel[7]);
+          weight += rgbAdd(&color, ledRead(i+1, j-1), kernel[6]);
+        weight += rgbAdd(&color, ledRead(i+1, j), kernel[7]);
         if (j < ledRows-1)
-          weight += rgbAdd(&color, leds->getPixel((i+1) + (j+1)*ledsPerStrip), kernel[8]);
+          weight += rgbAdd(&color, ledRead(i+1, j+1), kernel[8]);
       }
 
-      next[j + i*ledsPerStrip] = float2Color(color.r/weight, color.g/weight, color.b/weight);
+      next[pixelIndex(i,j)] = float2Color(color.r/weight, color.g/weight, color.b/weight);
     }
   }
 
@@ -155,7 +168,7 @@ void colorBands2(OctoWS2811 *leds) {
   for (int i=0; i<ledsPerStrip; i++) {
     gradient[i] = color;
 
-    if (random(10) == 0) {
+    if (random(3) == 0) {
       color = randColor(.1);
     }
   }
@@ -163,7 +176,7 @@ void colorBands2(OctoWS2811 *leds) {
     leds->setPixel(i,gradient[i/ledsPerStrip]);
   leds->show();
 
-  delay(200);
+  delay(400);
 }
 
 void dots(OctoWS2811 *leds) {
@@ -247,7 +260,7 @@ void text(OctoWS2811 *leds, const char* str) {
 
   // fill background with gradient colors
   for (int i=0; i<totalLights; i++) {
-    leds->setPixel(i,gradient[i%ledsPerStrip]);
+    leds->setPixel(i,gradient[i/ledsPerStrip]);
   }
 
   // write text shifted by offset.
@@ -273,23 +286,23 @@ void chromeBlur(OctoWS2811 *leds, uint32_t next[]) {
       float greenWeight = 0.0;
       color.r = color.g = color.b = 0.0;
       if (i > 1) {
-        rgbAdd(&color, leds->getPixel((i-1) + j*ledsPerStrip), 6.0, 4.0, 2.0);
+        rgbAdd(&color, ledRead(i-1, j), 6.0, 4.0, 2.0);
         redWeight += 6.0;
         greenWeight += 4.0;
         blueWeight += 2.0;
       }
-      rgbAdd(&color, leds->getPixel(i + j*ledsPerStrip), 16.0, 16.0, 16.0);
+      rgbAdd(&color, ledRead(i, j), 16.0, 16.0, 16.0);
       redWeight += 16.0;
       greenWeight += 16.0;
       blueWeight += 16.0;
       if (i < ledsPerStrip - 1) {
-        rgbAdd(&color, leds->getPixel((i+1) + j*ledsPerStrip), 2.0, 4.0, 6.0);
+        rgbAdd(&color, ledRead(i+1, j), 2.0, 4.0, 6.0);
         redWeight += 2.0;
         greenWeight += 4.0;
         blueWeight += 6.0;
       }
 
-      next[i + j*ledsPerStrip] = float2Color(color.r/redWeight*attenuate, color.g/greenWeight*attenuate, color.b/blueWeight*attenuate);
+      next[pixelIndex(i,j)] = float2Color(color.r/redWeight*attenuate, color.g/greenWeight*attenuate, color.b/blueWeight*attenuate);
     }
   }
 }
